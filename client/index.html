@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Real-time request logger and system monitor dashboard for a Node.js EC2 server." />
+  <title>Request Logger · System Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────── -->
+  <header>
+    <h1>⬡ <span>RequestLogger</span> · System Monitor</h1>
+    <div id="refresh-indicator">
+      <div class="pulse"></div>
+      <span id="last-updated">Connecting…</span>
+    </div>
+  </header>
+
+  <!-- ── Main Dashboard ──────────────────────────────── -->
+  <main>
+
+    <!-- Section 1 — System Status (anomaly detection) -->
+    <section class="card" id="status-section" aria-label="System Status">
+      <div class="card-header">
+        <span class="card-title">System Status</span>
+        <span id="status-time" style="font-size:.7rem;color:var(--text-muted)"></span>
+      </div>
+      <div class="card-body">
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Traffic</span>
+            <span id="badge-traffic" class="badge">—</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Server Load</span>
+            <span id="badge-load" class="badge">—</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Recent Requests (10s)</span>
+            <span id="status-recent" class="badge NORMAL">—</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">CPU Load Ratio</span>
+            <span id="status-cpu-ratio" class="badge NORMAL">—</span>
+          </div>
+        </div>
+        <div class="status-message" id="status-message">Loading status…</div>
+      </div>
+    </section>
+
+    <!-- Section 2 — Server Info (/info) -->
+    <section class="card" id="info-section" aria-label="Server Info">
+      <div class="card-header">
+        <span class="card-title">Server Info</span>
+        <span id="info-hostname" style="font-size:.72rem;font-family:var(--font-mono);color:var(--accent)"></span>
+      </div>
+      <div class="card-body">
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="stat-label">Platform</span>
+            <span class="stat-value" id="info-platform">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Uptime</span>
+            <span class="stat-value" id="info-uptime">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CPU Model</span>
+            <span class="stat-value" id="info-cpu" style="font-size:.75rem"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CPU Cores</span>
+            <span class="stat-value" id="info-cores">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CPU Load</span>
+            <span class="stat-value" id="info-load">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Memory Used</span>
+            <span class="stat-value" id="info-mem-used">—</span>
+          </div>
+          <!-- Full-width memory bar -->
+          <div class="mem-bar-wrap">
+            <div class="stat-label" style="display:flex;justify-content:space-between">
+              <span>Memory Usage</span>
+              <span id="info-mem-pct" style="color:var(--accent)">— %</span>
+            </div>
+            <div class="mem-bar">
+              <div class="mem-bar-fill" id="mem-bar-fill" style="width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted)">
+              <span id="info-mem-free">Free: —</span>
+              <span id="info-mem-total">Total: —</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3 — Request Logs (/logs) -->
+    <section class="card" id="logs-section" aria-label="Request Logs">
+      <div class="card-header">
+        <span class="card-title">Request Logs</span>
+        <span id="log-count" style="font-size:.72rem;font-family:var(--font-mono);color:var(--text-muted)">0 / 50</span>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="log-table-wrap">
+          <table role="grid" aria-label="HTTP request log">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>URL</th>
+                <th>IP</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="log-body">
+              <tr>
+                <td colspan="4" class="empty-state">Waiting for requests…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Request Logger + System Monitor &nbsp;·&nbsp; Auto-refreshes every 5 seconds &nbsp;·&nbsp; Data is in-memory only
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
