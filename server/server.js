@@ -9,27 +9,18 @@ const path = require('path');
 
 const app = express();
 const PORT = 80;
-const HOST = '0.0.0.0'; 
+const HOST = '0.0.0.0';
 
 // ---------------------------------------------------------------------------
-// STATIC MIDDLEWARE
+// STATIC FILES (Frontend)
 // ---------------------------------------------------------------------------
-// Serves CSS, JS, and images from the /client folder
 app.use(express.static(path.join(__dirname, '..', 'client')));
-
-// ---------------------------------------------------------------------------
-// ROOT ROUTE
-// ---------------------------------------------------------------------------
-// Serves the Dashboard UI when visiting http://<IP>/
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
-});
 
 // ---------------------------------------------------------------------------
 // IN-MEMORY REQUEST LOG STORE
 // ---------------------------------------------------------------------------
 const MAX_LOGS = 50;
-const requestLogs = []; 
+const requestLogs = [];
 
 // Logging Middleware
 app.use((req, res, next) => {
@@ -39,33 +30,38 @@ app.use((req, res, next) => {
     timestamp: new Date().toISOString(),
     ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown',
   };
+
   requestLogs.push(entry);
   if (requestLogs.length > MAX_LOGS) requestLogs.shift();
+
   next();
 });
 
 // ---------------------------------------------------------------------------
-// HELPER — CPU Load Average
+// HELPER — CPU Load
 // ---------------------------------------------------------------------------
 function getCpuLoad() {
   const cores = os.cpus().length;
   const [oneMin] = os.loadavg();
   const ratio = oneMin / (cores || 1);
+
   if (ratio > 0.8) return { level: 'HIGH', ratio: +ratio.toFixed(2) };
   if (ratio > 0.5) return { level: 'MEDIUM', ratio: +ratio.toFixed(2) };
   return { level: 'LOW', ratio: +ratio.toFixed(2) };
 }
 
 // ---------------------------------------------------------------------------
-// API ENDPOINTS
+// API ROUTES
 // ---------------------------------------------------------------------------
 
 app.get('/info', (req, res) => {
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
   const usedMem = totalMem - freeMem;
+
   res.json({
     hostname: os.hostname(),
+    platform: os.platform(),
     uptimeSeconds: Math.floor(os.uptime()),
     totalMemoryMB: (totalMem / 1024 / 1024).toFixed(1),
     freeMemoryMB: (freeMem / 1024 / 1024).toFixed(1),
@@ -88,13 +84,15 @@ app.get('/logs', (req, res) => {
 app.get('/status', (req, res) => {
   const now = Date.now();
   const windowMs = 10 * 1000;
+
   const recentCount = requestLogs.filter(
     (entry) => now - new Date(entry.timestamp).getTime() < windowMs
   ).length;
 
   const cpu = getCpuLoad();
+
   let traffic = recentCount > 50 ? 'HIGH' : (recentCount >= 10 ? 'NORMAL' : 'LOW');
-  
+
   let serverLoad = 'STABLE';
   if (traffic === 'HIGH' && cpu.level === 'HIGH') serverLoad = 'CRITICAL';
   else if (cpu.level === 'HIGH' || traffic === 'HIGH') serverLoad = 'WARNING';
@@ -110,8 +108,22 @@ app.get('/status', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// ROOT ROUTE
+// ---------------------------------------------------------------------------
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
+});
+
+// ---------------------------------------------------------------------------
+// CATCH-ALL ROUTE (IMPORTANT FIX)
+// ---------------------------------------------------------------------------
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
+});
+
+// ---------------------------------------------------------------------------
 // START SERVER
 // ---------------------------------------------------------------------------
 app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running at http://${HOST}:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
